@@ -4,3 +4,5 @@ source "http://rubygems.org"
 gemspec
 
 gem "fakefs", git: "git://github.com/defunkt/fakefs.git" 
+
+gem "pry"

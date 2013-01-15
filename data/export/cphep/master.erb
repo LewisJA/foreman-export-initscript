@@ -1,0 +1,110 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          <%= app %>
+# Short-Description: Generated initscript for <%= app %>
+# Description:       This file controls <%= app %>. It should be placed in /etc/init.d
+# Author: Foreman (cphep script) 
+# Command:  bundle exec foreman export cphep /where/to/put/script -a *app_name* -l /where/to/put/logs -u *set_user* -p *set_port*
+### END INIT INFO
+
+# Input Script Assumptions #
+# 1. Each command for the input project will be housed in its own ProcFile.
+# 2. Each ProcFile will contain the same four processes - start, stop, status, restart.
+# 3. The four processes will be in the following order - start, stop, status, restart.
+
+
+NAME=<%= app %>
+USERNAME=<%= user %>
+DESC="Controls $NAME"
+#PIDDIR=/var/run/$NAME
+PIDDIR=/Users/lewisja/Documents/Projects/test/PID/$NAME
+# SCRIPTNAME=/etc/init.d/$NAME
+SCRIPTNAME=/Users/lewisja/Documents/Projects/test/scripts/$NAME
+LOG=<%= log %>
+
+<% engine.each_process do |name, process| %>
+  # START APPLICATION:  <%= app %>  <%= name %>
+  do_start()
+  {
+    # PREPARE ENVIRONMENT: make/set logging files/directories
+    mkdir -p $PIDDIR                                  # "deploy" doesn't have permissions
+  	mkdir -p <%= log %>                               # "deploy" doesn't have permissions  # Set at generation with -l option
+  	chown $USERNAME: <%= log %>                       # "deploy" doesn't have permissions
+  	chown $USERNAME: $PIDDIR                          # "deploy" doesn't have permissions
+  	
+    # PREPARE ENVIRONMENT: make/set variables
+    cd <%= engine.root %>;
+    export PORT=<%= engine.port_for(process, 1) %>;
+    <% engine.environment.each_pair do |var,env| %> export <%= var.upcase %>=<%= env %>; <% end %>
+  	
+    # RUN COMMAND: 
+    <%= process.command %> -P $PIDDIR/<%= name %>.1.pid;
+    # <%= process.command %> >> <%= log %>/<%=name%>-1.log 2>&1 & echo $!
+  }
+  
+  # STOP APPLICATION: <%= app %> 
+  do_stop()
+  {
+    #Stop: <%= app %>.<%= name %>.1
+    kill `cat $PIDDIR/<%= name %>.1.pid`
+    rm $PIDDIR/<%= name %>.1.pid
+    rmdir $PIDDIR
+  }
+<% end %>
+
+case "$1" in
+  start)
+	  [ "$VERBOSE" != no ] && echo "Starting $NAME"
+	  do_start
+	  case "$?" in
+		  0|1) [ "$VERBOSE" != no ] && echo "Started $NAME Successfully";;
+		  2) [ "$VERBOSE" != no ] && echo "Problem starting $NAME";;
+    esac
+;;
+
+  stop)
+	  [ "$VERBOSE" != no ] && echo "Stopping $NAME"
+	  do_stop
+	  case "$?" in
+  		0|1) [ "$VERBOSE" != no ] && echo "Stopped $NAME Successfully" ;;
+  		2) [ "$VERBOSE" != no ] && echo "Problem stopping $NAME" ;;
+    esac
+;;
+
+  status)
+    status=`ps aux | grep $NAME -c`
+    if [ $status -lt 2 ]; then
+      echo "$NAME is not running"
+      return $status
+    else
+      echo "$NAME is running"
+      return 0
+    fi
+;;
+
+  restart|force-reload)
+	  echo "Restarting $NAME"
+	  do_stop
+	  case "$?" in
+	    0|1)
+		    do_start
+		    case "$?" in
+			    0) echo "Restarted $NAME" ;;
+			    1) echo "Old process is still running" ;;
+			    *) echo "Failed to restart" ;;
+        esac
+        return $?
+    ;;
+      *)
+	      echo "Failed to stop"
+	      return $?
+    ;;
+    esac
+;;
+  *)
+	  echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+	  #exit 3
+;;
+esac
+
+:

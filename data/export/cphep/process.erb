@@ -1,0 +1,125 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Application:      <%= app %>
+# Process:          <%= name %>
+# Description:      This file controls the <%= name %> for <%= app %>. It should be placed in /etc/init.d
+# Author: Foreman (cphep script)
+### END INIT INFO
+
+
+APPLICATION=<%= app %>
+PROCESS=<%= name %>
+NUMBER=<%= num %>
+USERNAME=<%= user %>
+#PIDDIR=/var/run/$APPLICATION
+#SCRIPTNAME=/etc/init.d/$APPLICATION/$PROCESS
+PIDDIR=/Users/lewisja/Documents/Projects/test/PID/$APPLICATION
+SCRIPTNAME=<%= location %>/$APPLICATION/$PROCESS
+LOG=<%= log %>
+
+## BEGIN FUNCTIONS
+# START APPLICATION: <%= app %> <%= name %>
+do_start()
+{
+  # PREPARE ENVIRONMENT: make/set logging files/directories
+  mkdir -p $PIDDIR                                  # "deploy" doesn't have permissions
+	mkdir -p <%= log %>                               # "deploy" doesn't have permissions  # Set at generation with -l option
+	chown $USERNAME: <%= log %>                       # "deploy" doesn't have permissions
+	chown $USERNAME: $PIDDIR                          # "deploy" doesn't have permissions
+	
+  # PREPARE ENVIRONMENT: make/set variables
+  cd <%= engine.root %>;
+  export PORT=<%= engine.port_for(process, num) %>;
+  <% engine.environment.each_pair do |var,env| %> export <%= var.upcase %>=<%= env %>; <% end %>
+	
+  # RUN COMMAND: 
+  <%= process.command %> -P $PIDDIR/$PROCESS.$NUMBER.pid;
+  
+  # RESET ENVIRONMENT: move back to starting directory
+  cd - ;
+}
+
+# STOP APPLICATION: <%= app %> <%= name %>
+do_stop()
+{
+  # CHECK FILE EXISTENCE: no process to stop if file doesn't exist
+  if [ -r $PIDDIR/$PROCESS.$NUMBER.pid ]; then
+    kill `cat $PIDDIR/$PROCESS.$NUMBER.pid`
+    rm $PIDDIR/$PROCESS.$NUMBER.pid
+    rmdir $PIDDIR
+  else
+    return 0
+  fi
+}
+
+# APPLICATION STATUS:  <%= app %> <%= name %>
+do_status()
+{
+  status=`ps aux | grep $APPLICATION/$PROCESS.$NUMBER.pid -c`
+  if [ $status -lt 2 ]; then
+    return $status
+  else
+        return 0
+  fi
+}
+## END FUNCTIONS
+
+
+## BEGIN CALL HANDLING
+case "$1" in
+  start)
+	  [ "$VERBOSE" != no ] && echo "Starting $PROCESS process for $APPLICATION application: "
+	  do_start
+	  do_status
+    case "$?" in
+      0) [ "$VERBOSE" != no ] && echo "SUCCESS - $APPLICATION $PROCESS started"
+    ;;
+      *) [ "$VERBOSE" != no ] && echo "FAILURE - $APPLICATION $PROCESS NOT started"
+    ;;
+    esac
+;;
+
+  stop)
+	  [ "$VERBOSE" != no ] && echo "Stopping $PROCESS process for $APPLICATION application: "
+	  do_stop
+	  case "$?" in
+  		0) [ "$VERBOSE" != no ] && echo "SUCCESS"
+  	;;
+  		*) [ "$VERBOSE" != no ] && echo "FAILURE"
+  	;;
+    esac
+;;
+
+  status)
+    [ "$VERBOSE" != no ] && echo "$PROCESS process for $APPLICATION application is currently: "
+    do_status
+    case "$?" in 
+      0)  [ "$VERBOSE" != no ] && echo "RUNNING"
+    ;;
+      *)  [ "$VERBOSE" != no ] && echo "NOT RUNNING"
+    ;;
+    esac
+;;
+
+  restart|force-reload)
+	  echo "Restarting $PROCESS process for $APPLICATION application"
+	  do_stop
+	  case "$?" in
+	    0)
+		    do_start
+		    do_status
+		    case "$?" in
+			    0) echo "SUCCESS - $APPLICATION $PROCESS restarted" ;;
+			    *) echo "FAILURE - $APPLICATION $PROCESS Failed to restart" ;;
+        esac
+    ;;
+      *)
+	      echo "FAILURE"
+    ;;
+    esac
+;;
+  *)
+	  echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+;;
+esac
+## END CALL HANDLING

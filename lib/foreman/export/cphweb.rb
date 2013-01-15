@@ -1,21 +1,15 @@
 require "erb"
 require "foreman/export"
 
-class Foreman::Export::Initscript < Foreman::Export::Base
+class Foreman::Export::Cphweb < Foreman::Export::Base
 
   def export
 
         #super
         error("Must specify a location") unless location
         FileUtils.mkdir_p(location) rescue error("Could not create: #{location}")
-        FileUtils.mkdir_p(log) rescue error("Could not create: #{log}")
-    # begin
-    # FileUtils.chown(user, nil, log)
-    # rescue Exception => e
-    # error("Could not chown #{log} to #{user} - #{e.message}")
-    # end
 
-        name = "initscript/master.erb"
+        name = "cphweb/master.erb"
         name_without_first = name.split("/")[1..-1].join("/")
         matchers = []
         matchers << File.join(options[:template], name_without_first) if options[:template]
@@ -24,9 +18,11 @@ class Foreman::Export::Initscript < Foreman::Export::Base
         path = File.read(matchers.detect { |m| File.exists?(m) })
         compiled = ERB.new(path).result(binding)
         write_file "#{app}", compiled
-    # path = export_template name
-    # write_template "initscript/master.erb", "#{app}", binding
        end
+       
+  def log
+    options[:log] || "/var/www/apps/#{app}/shared/log/"
+  end
 
 end
 
