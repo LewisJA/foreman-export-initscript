@@ -1,6 +1,5 @@
 require "erb"
 require "foreman/export"
-require "pry"
 
 class Foreman::Export::Cphep < Foreman::Export::Base
 
@@ -8,22 +7,9 @@ class Foreman::Export::Cphep < Foreman::Export::Base
 
     super
     error("Must specify a location") unless location
-    create_directory("#{location}") rescue error("Could not create: #{location}")
-    
     # FileUtils.mkdir_p(location) rescue error("Could not create: #{location}")
-    
-    # name = "cphep/master.erb"
-    # name_without_first = name.split("/")[1..-1].join("/")
-    # matchers = []
-    # matchers << File.join(options[:template], name_without_first) if options[:template]
-    # matchers << File.expand_path("~/.foreman/templates/#{name}")
-    # matchers << File.expand_path("../../../../data/export/#{name}", __FILE__)
-    # path = File.read(matchers.detect { |m| File.exists?(m) })
-    # compiled = ERB.new(path).result(binding)
-    # write_file "#{app}", compiled
-
-    
-    create_directory("#{app}")
+    # create_directory("#{location}") rescue error("Could not create: #{location}")
+    create_directory(app) rescue error("Could not create:  #{location}/#{app}")
 
     Dir["#{app}*"].each do |file|
       clean file
@@ -37,6 +23,8 @@ class Foreman::Export::Cphep < Foreman::Export::Base
       end
     end
   end
+
+
   
   def export_template(name, file=nil, template_root=nil)
     if file && template_root
@@ -46,8 +34,6 @@ class Foreman::Export::Cphep < Foreman::Export::Base
       matchers = []
       matchers << File.join(options[:template], name_without_first) if options[:template]
       matchers << File.expand_path("../foreman-export-initscript/data/export/#{name}")
-      # matchers << File.expand_path("~/Documents/Projects/foreman-export-initscript/data/export/#{name}")
-      # matchers << File.expand_path("~/Documents/Projects/foreman-export-initscript/data/export/#{name}", __FILE__)
       File.read(matchers.detect { |m| File.exists?(m) })
     end
   end
@@ -55,8 +41,7 @@ class Foreman::Export::Cphep < Foreman::Export::Base
     
            
   def log
-    options[:log] || "/var/www/apps/#{app}/shared/log/"
+    options[:log] || "#{engine.root}/log"
   end
 
 end
-

@@ -1,10 +1,11 @@
 #! /bin/sh
-### BEGIN INIT INFO
+###  BEGIN INIT INFO  ###
 # Application:      <%= app %>
 # Process:          <%= name %>
 # Description:      This file controls the <%= name %> for <%= app %>. It should be placed in /etc/init.d
 # Author: Foreman (cphep script)
-### END INIT INFO
+# Command:  bundle exec foreman export cphep /where/to/put/script -a *app_name* -l /where/to/put/logs -u *set_user* -p *set_port*
+###  END INIT INFO  ###
 
 
 APPLICATION=<%= app %>
@@ -12,20 +13,22 @@ PROCESS=<%= name %>
 NUMBER=<%= num %>
 USERNAME=<%= user %>
 #PIDDIR=/var/run/$APPLICATION
+#PIDDIR=/var/tmp/$APPLICATION   # This may be the better option.  "deploy" has write permissions here
 #SCRIPTNAME=/etc/init.d/$APPLICATION/$PROCESS
 PIDDIR=/Users/lewisja/Documents/Projects/test/PID/$APPLICATION
-SCRIPTNAME=<%= location %>/$APPLICATION/$PROCESS
-LOG=<%= log %>
+SCRIPTNAME=<%= location || "/etc/init.d" %>/$APPLICATION/$PROCESS
+LOGDIR=<%= log %>
+LOG=$LOGDIR/development.log
 
-## BEGIN FUNCTIONS
+###  BEGIN FUNCTIONS  ###
 # START APPLICATION: <%= app %> <%= name %>
 do_start()
 {
-  # PREPARE ENVIRONMENT: make/set logging files/directories
-  mkdir -p $PIDDIR                                  # "deploy" doesn't have permissions
-	mkdir -p <%= log %>                               # "deploy" doesn't have permissions  # Set at generation with -l option
-	chown $USERNAME: <%= log %>                       # "deploy" doesn't have permissions
-	chown $USERNAME: $PIDDIR                          # "deploy" doesn't have permissions
+  # PREPARE ENVIRONMENT: make/set logging files/directories 
+  mkdir -p $PIDDIR              # "deploy" doesn't have permissions
+  chown $USERNAME: $PIDDIR      # "deploy" doesn't have permissions
+  mkdir -p $LOGDIR              # "deploy" doesn't have permissions  # Set at generation with -l option
+  chown $USERNAME: $LOG         # "deploy" doesn't have permissions
 	
   # PREPARE ENVIRONMENT: make/set variables
   cd <%= engine.root %>;
@@ -52,23 +55,23 @@ do_stop()
   fi
 }
 
-# APPLICATION STATUS:  <%= app %> <%= name %>
+# CHECK APPLICATION STATUS:  <%= app %> <%= name %>
 do_status()
 {
   status=`ps aux | grep $APPLICATION/$PROCESS.$NUMBER.pid -c`
-  if [ $status -lt 2 ]; then
+  if [ $status -ne 2 ]; then
     return $status
   else
         return 0
   fi
 }
-## END FUNCTIONS
+###  END FUNCTIONS  ###
 
 
-## BEGIN CALL HANDLING
+###  BEGIN CALL HANDLING  ###
 case "$1" in
   start)
-	  [ "$VERBOSE" != no ] && echo "Starting $PROCESS process for $APPLICATION application: "
+	  [ "$VERBOSE" != no ] && echo "STARTING $PROCESS process for $APPLICATION application: "
 	  do_start
 	  do_status
     case "$?" in
@@ -80,7 +83,7 @@ case "$1" in
 ;;
 
   stop)
-	  [ "$VERBOSE" != no ] && echo "Stopping $PROCESS process for $APPLICATION application: "
+	  [ "$VERBOSE" != no ] && echo "STOPPING $PROCESS process for $APPLICATION application: "
 	  do_stop
 	  case "$?" in
   		0) [ "$VERBOSE" != no ] && echo "SUCCESS"
@@ -101,8 +104,8 @@ case "$1" in
     esac
 ;;
 
-  restart|force-reload)
-	  echo "Restarting $PROCESS process for $APPLICATION application"
+  restart)
+	  echo "RESTARTING $PROCESS process for $APPLICATION application"
 	  do_stop
 	  case "$?" in
 	    0)
@@ -119,7 +122,7 @@ case "$1" in
     esac
 ;;
   *)
-	  echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+	  echo "Usage: $SCRIPTNAME {start|stop|status|restart}" >&2
 ;;
 esac
-## END CALL HANDLING
+###  END CALL HANDLING  ###
