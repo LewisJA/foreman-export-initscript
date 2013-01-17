@@ -3,13 +3,19 @@ require "foreman/export"
 
 class Foreman::Export::Cphep < Foreman::Export::Base
 
-  def export
 
-    super
-    error("Must specify a location") unless location
-    # FileUtils.mkdir_p(location) rescue error("Could not create: #{location}")
-    # create_directory("#{location}") rescue error("Could not create: #{location}")
-    create_directory(app) rescue error("Could not create:  #{location}/#{app}")
+  
+  def create_directory(dir)
+    say "creating: #{dir}"
+    FileUtils.mkdir_p(dir)
+  end
+
+
+  
+  def export
+    @location = self.location || "/etc/init.d"
+    create_directory("#{@location}/#{app}") rescue error("Can not create:  #{@location}/#{app}")
+    FileUtils.chown(user, nil, "#{@location}/#{app}") rescue error("Could not chown #{@location}/#{app} to #{user}")
 
     Dir["#{app}*"].each do |file|
       clean file
@@ -38,8 +44,8 @@ class Foreman::Export::Cphep < Foreman::Export::Base
     end
   end
 
-    
-           
+
+  
   def log
     options[:log] || "#{engine.root}/log"
   end
