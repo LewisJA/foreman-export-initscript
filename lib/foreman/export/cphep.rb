@@ -3,19 +3,10 @@ require "foreman/export"
 
 class Foreman::Export::Cphep < Foreman::Export::Base
 
-
-  
-  def create_directory(dir)
-    say "creating: #{dir}"
-    FileUtils.mkdir_p(dir)
-  end
-
-
-  
   def export
-    @location = self.location || "/etc/init.d"
-    create_directory("#{@location}/#{app}") rescue error("Can not create:  #{@location}/#{app}")
-    FileUtils.chown(user, nil, "#{@location}/#{app}") rescue error("Could not chown #{@location}/#{app} to #{user}")
+    create_directory("#{app}") rescue error("Can not create:  #{location}/#{app}")
+    FileUtils.chown(user, nil, "#{location}") rescue error("Could not chown #{location} to #{user}")
+    FileUtils.chown(user, nil, "#{location}/#{app}") rescue error("Could not chown #{location}/#{app} to #{user}")
 
     Dir["#{app}*"].each do |file|
       clean file
@@ -42,6 +33,12 @@ class Foreman::Export::Cphep < Foreman::Export::Base
       matchers << File.expand_path("../foreman-export-initscript/data/export/#{name}")
       File.read(matchers.detect { |m| File.exists?(m) })
     end
+  end
+
+
+  
+  def location
+    options[:location] || "/etc/init.d"
   end
 
 
