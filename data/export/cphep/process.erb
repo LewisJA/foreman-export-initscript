@@ -17,18 +17,17 @@ USERNAME=<%= user %>
 #SCRIPTNAME=/etc/init.d/$APPLICATION/$PROCESS
 PIDDIR=/Users/lewisja/Documents/Projects/test/PID/$APPLICATION
 SCRIPTNAME=<%= location %>/$APPLICATION/$PROCESS
-LOGDIR=<%= log %>
-LOG=$LOGDIR/development.log
+LOG=<%= log %>
 
 ###  BEGIN FUNCTIONS  ###
 # START APPLICATION: <%= app %> <%= name %>
 do_start()
 {
   # PREPARE ENVIRONMENT: make/set logging files/directories 
-  mkdir -p $PIDDIR              # "deploy" doesn't have permissions
-  chown $USERNAME: $PIDDIR      # "deploy" doesn't have permissions
-  mkdir -p $LOGDIR              # "deploy" doesn't have permissions  # Set at generation with -l option
-  chown $USERNAME: $LOG         # "deploy" doesn't have permissions
+  mkdir -p $PIDDIR              # creates the PID storing directory for this run
+  chown $USERNAME: $PIDDIR
+  touch $LOG                    # creates the log file, if it doesn't exist. Freshens it, if it does.
+  chown $USERNAME: $LOG
 	
   # PREPARE ENVIRONMENT: make/set variables
   cd <%= engine.root %>;

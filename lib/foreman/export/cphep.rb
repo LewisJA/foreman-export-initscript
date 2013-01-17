@@ -51,7 +51,11 @@ class Foreman::Export::Cphep < Foreman::Export::Base
 
   
   def log
-    options[:log] || "#{engine.root}/log"
+    if Dir.exists?("/var/www/apps")
+      options[:log] || "#{engine.root}/log/production.log"
+    else
+      options[:log] || "#{engine.root}/log/development.log"
+    end
   end
 
 end
