@@ -23,6 +23,13 @@ class Foreman::Export::Cphep < Foreman::Export::Base
 
 
   
+  def initialize(location, engine, options={})
+    super
+    @location = location || "/etc/init.d"
+  end
+
+
+  
   def export_template(name, file=nil, template_root=nil)
     if file && template_root
       old_export_template name, file, template_root
@@ -38,7 +45,7 @@ class Foreman::Export::Cphep < Foreman::Export::Base
 
   
   def location
-    options[:location] || "/etc/init.d"
+    location = @location
   end
 
 
