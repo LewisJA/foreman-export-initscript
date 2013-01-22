@@ -12,10 +12,7 @@ APPLICATION=<%= app %>
 PROCESS=<%= name %>
 NUMBER=<%= num %>
 USERNAME=<%= user %>
-#PIDDIR=/var/run/$APPLICATION
-#PIDDIR=/var/tmp/$APPLICATION   # This may be the better option.  "deploy" has write permissions here
-#SCRIPTNAME=/etc/init.d/$APPLICATION/$PROCESS
-PIDDIR=/Users/lewisja/Documents/Projects/test/PID/$APPLICATION
+PIDDIR=/var/tmp/$APPLICATION   # This may be the better option.  "deploy" has write permissions here
 SCRIPTNAME=<%= location %>/$APPLICATION/$PROCESS
 LOG=<%= log %>
 
